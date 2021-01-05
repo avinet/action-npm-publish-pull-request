@@ -6993,15 +6993,13 @@ function run() {
             }
             // Update the version number in package.json with beta.<sha>
             let version = "";
-            yield sh.exec("npm", ["version", "prerelease", `--preid=beta.${sha}`], {
+            yield sh.exec("npm", ["version", "prerelease", `--preid=beta.${sha}`, "--no-git-tag-version"], {
                 listeners: {
                     stdline: (data) => {
                         version = data.trim();
                     },
                 },
             });
-            // Commit change (required for npm publish)
-            yield sh.exec("git", ["commit", "-am", `"Pre-release version ${version}"`]);
             core.info(`Publishing package from PR #${pr} with version ${version}`);
             // Publish under the PR tag
             yield sh.exec("npm", ["publish", "--access", access, "--tag", `pr${pr}`]);

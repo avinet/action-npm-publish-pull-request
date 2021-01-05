@@ -39,16 +39,17 @@ async function run() {
 
     // Update the version number in package.json with beta.<sha>
     let version = "";
-    await sh.exec("npm", ["version", "prerelease", `--preid=beta.${sha}`], {
-      listeners: {
-        stdline: (data: string) => {
-          version = data.trim();
+    await sh.exec(
+      "npm",
+      ["version", "prerelease", `--preid=beta.${sha}`, "--no-git-tag-version"],
+      {
+        listeners: {
+          stdline: (data: string) => {
+            version = data.trim();
+          },
         },
-      },
-    });
-
-    // Commit change (required for npm publish)
-    await sh.exec("git", ["commit", "-am", `"Pre-release version ${version}"`]);
+      }
+    );
 
     core.info(`Publishing package from PR #${pr} with version ${version}`);
 
