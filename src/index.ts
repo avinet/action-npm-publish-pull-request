@@ -28,10 +28,6 @@ async function run() {
     const pr = payload.number;
     const sha = payload.pull_request.head.sha.substr(-7);
 
-    console.log(
-      `Publishing pre-release package for PR #${pr} with beta tag ${sha}`
-    );
-
     let access = core.getInput("access");
     switch (access) {
       case "public":
@@ -42,11 +38,21 @@ async function run() {
     }
 
     // Update the version number in package.json with beta.<sha>
-    sh.exec("npm", ["version", "prerelease", `--preid=beta.${sha}`]);
+    let version = "";
+    await sh.exec("npm", ["version", "prerelease", `--preid=beta.${sha}`], {
+      listeners: {
+        stdline: (data: string) => {
+          version = data.trim();
+        },
+      },
+    });
+
+    // Commit change (required for npm publish)
+    await sh.exec("git", ["commit", "-am", `"Pre-release version ${version}"`]);
+
     // Publish under the PR tag
-    sh.exec("npm", ["publish", "--access", access, "--tag", `pr${pr}`]);
+    await sh.exec("npm", ["publish", "--access", access, "--tag", `pr${pr}`]);
   } catch (err) {
-    console.log(err);
     core.setFailed(err.message);
   }
 }
