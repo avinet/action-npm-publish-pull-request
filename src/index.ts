@@ -9,7 +9,7 @@ async function run() {
   try {
     if (context.eventName !== "pull_request") {
       core.setOutput("skip", true);
-      console.log("Not a pull request, skipping");
+      core.info("Not a pull request, skipping");
       return;
     }
 
@@ -21,7 +21,7 @@ async function run() {
 
       default:
         core.setOutput("skip", true);
-        console.log(`Pull request action ${payload.action} is ignored`);
+        core.info(`Pull request action ${payload.action} is ignored`);
         return;
     }
 
@@ -49,6 +49,8 @@ async function run() {
 
     // Commit change (required for npm publish)
     await sh.exec("git", ["commit", "-am", `"Pre-release version ${version}"`]);
+
+    core.info(`Publishing package from PR #${pr} with version ${version}`);
 
     // Publish under the PR tag
     await sh.exec("npm", ["publish", "--access", access, "--tag", `pr${pr}`]);
