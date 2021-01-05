@@ -1,0 +1,14 @@
+name: "npm publish pre-release for pull request"
+description: "Publishes a pre-release version from pull request"
+branding:
+  icon: box
+  color: blue
+author: "Asplan Viak"
+input:
+  access:
+    description: "npm package --access value"
+    required: false
+    default: "restricted"
+runs:
+  using: "node12"
+  main: "dist/index.js"
