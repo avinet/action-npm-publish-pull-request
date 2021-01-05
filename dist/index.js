@@ -6969,7 +6969,7 @@ function run() {
         try {
             if (context.eventName !== "pull_request") {
                 core.setOutput("skip", true);
-                console.log("Not a pull request, skipping");
+                core.info("Not a pull request, skipping");
                 return;
             }
             const payload = context.payload;
@@ -6978,10 +6978,10 @@ function run() {
                     break;
                 default:
                     core.setOutput("skip", true);
-                    console.log(`Pull request action ${payload.action} is ignored`);
+                    core.info(`Pull request action ${payload.action} is ignored`);
                     return;
             }
-            const pr = payload.pull_request.number;
+            const pr = payload.number;
             const sha = payload.pull_request.head.sha.substr(-7);
             let access = core.getInput("access");
             switch (access) {
@@ -6992,12 +6992,21 @@ function run() {
                     break;
             }
             // Update the version number in package.json with beta.<sha>
-            sh.exec("npm", ["version", "prerelease", `--preid=beta.${sha}`]);
+            let version = "";
+            yield sh.exec("npm", ["version", "prerelease", `--preid=beta.${sha}`], {
+                listeners: {
+                    stdline: (data) => {
+                        version = data.trim();
+                    },
+                },
+            });
+            // Commit change (required for npm publish)
+            yield sh.exec("git", ["commit", "-am", `"Pre-release version ${version}"`]);
+            core.info(`Publishing package from PR #${pr} with version ${version}`);
             // Publish under the PR tag
-            sh.exec("npm", ["publish", "--access", access, "--tag", `pr${pr}`]);
+            yield sh.exec("npm", ["publish", "--access", access, "--tag", `pr${pr}`]);
         }
         catch (err) {
-            console.log(err);
             core.setFailed(err.message);
         }
     });
