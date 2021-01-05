@@ -26,7 +26,7 @@ async function run() {
     }
 
     const pr = payload.number;
-    const sha = payload.pull_request.head.sha.substr(-7);
+    const sha = payload.pull_request.head.sha.substr(0, 7);
 
     let access = core.getInput("access");
     switch (access) {
@@ -55,6 +55,22 @@ async function run() {
 
     // Publish under the PR tag
     await sh.exec("npm", ["publish", "--access", access, "--tag", `pr${pr}`]);
+
+    // Post PR comment with tag
+    const token = process.env.GITHUB_TOKEN as string;
+    if (token) {
+      const client = github.getOctokit(token);
+      const owner = github.context.repo.owner;
+      const repo = github.context.repo.repo;
+
+      const response = await client.issues.createComment({
+        owner,
+        repo,
+        issue_number: pr,
+        body: `npm package published as @${owner}/${repo}@${version.substr(1)}`,
+      });
+      core.debug(`created comment URL: ${response.data.html_url}`);
+    }
   } catch (err) {
     core.setFailed(err.message);
   }
