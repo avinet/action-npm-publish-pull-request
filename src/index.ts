@@ -17,6 +17,7 @@ async function run() {
 
     switch (payload.action) {
       case "synchronize":
+      case "opened":
         break;
 
       default:

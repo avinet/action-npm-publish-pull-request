@@ -6975,6 +6975,7 @@ function run() {
             const payload = context.payload;
             switch (payload.action) {
                 case "synchronize":
+                case "opened":
                     break;
                 default:
                     core.setOutput("skip", true);
