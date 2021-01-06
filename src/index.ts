@@ -2,6 +2,7 @@ import * as sh from "@actions/exec";
 import * as github from "@actions/github";
 import * as core from "@actions/core";
 import * as Webhooks from "@octokit/webhooks";
+import * as fs from "fs";
 
 const context = github.context;
 
@@ -64,11 +65,15 @@ async function run() {
       const owner = github.context.repo.owner;
       const repo = github.context.repo.repo;
 
+      const packageJson = fs.readFileSync("./package.json", "utf8");
+      const packageJsonObj = JSON.parse(packageJson);
+      const packageName = packageJsonObj.name;
+
       const response = await client.issues.createComment({
         owner,
         repo,
         issue_number: pr,
-        body: `npm package published as @${owner}/${repo}@${version.substr(1)}`,
+        body: `npm package published as ${packageName}@${version.substr(1)}`,
       });
       core.debug(`created comment URL: ${response.data.html_url}`);
     }
