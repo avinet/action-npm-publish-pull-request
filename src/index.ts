@@ -1,7 +1,6 @@
 import * as sh from "@actions/exec";
 import * as github from "@actions/github";
 import * as core from "@actions/core";
-import * as Webhooks from "@octokit/webhooks";
 import * as fs from "fs";
 
 const context = github.context;
@@ -14,7 +13,7 @@ async function run() {
       return;
     }
 
-    const payload = context.payload as Webhooks.EventPayloads.WebhookPayloadPullRequest;
+    const payload = context.payload;
 
     switch (payload.action) {
       case "synchronize":
@@ -28,7 +27,7 @@ async function run() {
     }
 
     const pr = payload.number;
-    const sha = payload.pull_request.head.sha.substr(0, 7);
+    const sha = payload.pull_request!.head.sha.substr(0, 7);
 
     let access = core.getInput("access");
     switch (access) {
@@ -53,7 +52,9 @@ async function run() {
       }
     );
 
-    core.info(`Publishing package from PR #${pr} with version ${version}`);
+    core.info(
+      `Publishing package from PR #${pr} with version ${version}, access: ${access}`
+    );
 
     // Publish under the PR tag
     await sh.exec("npm", ["publish", "--access", access, "--tag", `pr${pr}`]);
@@ -69,15 +70,15 @@ async function run() {
       const packageJsonObj = JSON.parse(packageJson);
       const packageName = packageJsonObj.name;
 
-      const response = await client.issues.createComment({
+      const response = await client.rest.issues.createComment({
         owner,
         repo,
         issue_number: pr,
-        body: `npm package published as ${packageName}@${version.substr(1)}`,
+        body: `npm package published as ${packageName}@${version.substring(1)}`,
       });
       core.debug(`created comment URL: ${response.data.html_url}`);
     }
-  } catch (err) {
+  } catch (err: any) {
     core.setFailed(err.message);
   }
 }
