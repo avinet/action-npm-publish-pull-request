@@ -56,7 +56,7 @@ async function run() {
     );
 
     core.info(
-      `Publishing package from PR #${pr} with version ${version}, access: ${access}`
+      `Publishing package from PR #${pr} with version ${version}, access: ${access} from path ${path}`
     );
 
     // Publish under the PR tag
