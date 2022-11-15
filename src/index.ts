@@ -38,6 +38,8 @@ async function run() {
         break;
     }
 
+    const path = core.getInput("path") || ".";
+
     // Update the version number in package.json with beta.<sha>
     let version = "";
     await sh.exec(
@@ -49,6 +51,7 @@ async function run() {
             version = data.trim();
           },
         },
+        cwd: path,
       }
     );
 
@@ -57,7 +60,9 @@ async function run() {
     );
 
     // Publish under the PR tag
-    await sh.exec("npm", ["publish", "--access", access, "--tag", `pr${pr}`]);
+    await sh.exec("npm", ["publish", "--access", access, "--tag", `pr${pr}`], {
+      cwd: path,
+    });
 
     // Post PR comment with tag
     const token = process.env.GITHUB_TOKEN as string;

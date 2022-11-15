@@ -9,6 +9,10 @@ inputs:
     description: "npm publish --access value"
     required: false
     default: "restricted"
+  path:
+    description: "Path to folder for release"
+    required: false
+    default: "."
 runs:
   using: "node16"
   main: "dist/index.js"
