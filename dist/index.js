@@ -10811,6 +10811,7 @@ const sh = __importStar(__nccwpck_require__(1514));
 const github = __importStar(__nccwpck_require__(5438));
 const core = __importStar(__nccwpck_require__(2186));
 const fs = __importStar(__nccwpck_require__(7147));
+const path = __importStar(__nccwpck_require__(1017));
 const context = github.context;
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -10840,7 +10841,7 @@ function run() {
                     access = "restricted";
                     break;
             }
-            const path = core.getInput("path") || ".";
+            const cwd = core.getInput("path") || ".";
             // Update the version number in package.json with beta.<sha>
             let version = "";
             yield sh.exec("npm", ["version", "prerelease", `--preid=beta.${sha}`, "--no-git-tag-version"], {
@@ -10849,12 +10850,12 @@ function run() {
                         version = data.trim();
                     },
                 },
-                cwd: path,
+                cwd: cwd,
             });
-            core.info(`Publishing package from PR #${pr} with version ${version}, access: ${access} from path ${path}`);
+            core.info(`Publishing package from PR #${pr} with version ${version}, access: ${access} from path ${cwd}`);
             // Publish under the PR tag
             yield sh.exec("npm", ["publish", "--access", access, "--tag", `pr${pr}`], {
-                cwd: path,
+                cwd: cwd,
             });
             // Post PR comment with tag
             const token = process.env.GITHUB_TOKEN;
@@ -10862,14 +10863,14 @@ function run() {
                 const client = github.getOctokit(token);
                 const owner = github.context.repo.owner;
                 const repo = github.context.repo.repo;
-                const packageJson = fs.readFileSync("./package.json", "utf8");
+                const packageJson = fs.readFileSync(path.join(cwd, "package.json"), "utf8");
                 const packageJsonObj = JSON.parse(packageJson);
                 const packageName = packageJsonObj.name;
                 const response = yield client.rest.issues.createComment({
                     owner,
                     repo,
                     issue_number: pr,
-                    body: `npm package published as ${packageName}@${version.substring(1)}`,
+                    body: `npm package published\n\n- ${packageName}@${version.substring(1)}\n- ${packageName}@pr${pr}`,
                 });
                 core.debug(`created comment URL: ${response.data.html_url}`);
             }

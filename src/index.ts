@@ -2,6 +2,7 @@ import * as sh from "@actions/exec";
 import * as github from "@actions/github";
 import * as core from "@actions/core";
 import * as fs from "fs";
+import * as path from "path";
 
 const context = github.context;
 
@@ -38,7 +39,7 @@ async function run() {
         break;
     }
 
-    const path = core.getInput("path") || ".";
+    const cwd = core.getInput("path") || ".";
 
     // Update the version number in package.json with beta.<sha>
     let version = "";
@@ -51,17 +52,17 @@ async function run() {
             version = data.trim();
           },
         },
-        cwd: path,
+        cwd: cwd,
       }
     );
 
     core.info(
-      `Publishing package from PR #${pr} with version ${version}, access: ${access} from path ${path}`
+      `Publishing package from PR #${pr} with version ${version}, access: ${access} from path ${cwd}`
     );
 
     // Publish under the PR tag
     await sh.exec("npm", ["publish", "--access", access, "--tag", `pr${pr}`], {
-      cwd: path,
+      cwd: cwd,
     });
 
     // Post PR comment with tag
@@ -71,7 +72,10 @@ async function run() {
       const owner = github.context.repo.owner;
       const repo = github.context.repo.repo;
 
-      const packageJson = fs.readFileSync("./package.json", "utf8");
+      const packageJson = fs.readFileSync(
+        path.join(cwd, "package.json"),
+        "utf8"
+      );
       const packageJsonObj = JSON.parse(packageJson);
       const packageName = packageJsonObj.name;
 
@@ -79,7 +83,9 @@ async function run() {
         owner,
         repo,
         issue_number: pr,
-        body: `npm package published as ${packageName}@${version.substring(1)}`,
+        body: `npm package published\n\n- ${packageName}@${version.substring(
+          1
+        )}\n- ${packageName}@pr${pr}`,
       });
       core.debug(`created comment URL: ${response.data.html_url}`);
     }

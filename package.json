@@ -1,6 +1,6 @@
 {
   "name": "action-npm-publish-pull-request",
-  "version": "4.1.0",
+  "version": "5.0.0",
   "description": "Publishes pre-release packages for pull requests.",
   "main": "src/index.ts",
   "scripts": {
