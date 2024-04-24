@@ -10866,13 +10866,36 @@ function run() {
                 const packageJson = fs.readFileSync(path.join(cwd, "package.json"), "utf8");
                 const packageJsonObj = JSON.parse(packageJson);
                 const packageName = packageJsonObj.name;
-                const response = yield client.rest.issues.createComment({
+                const prefix = `npm package ${packageName} available as:`;
+                const body = `${prefix}\n\n- ${packageName}@${version.substring(1)}\n- ${packageName}@pr${pr}`;
+                const comments = yield client.rest.issues.listComments({
                     owner,
                     repo,
                     issue_number: pr,
-                    body: `npm package published\n\n- ${packageName}@${version.substring(1)}\n- ${packageName}@pr${pr}`,
                 });
-                core.debug(`created comment URL: ${response.data.html_url}`);
+                let existingComment = comments.data.find((comment) => {
+                    var _a, _b;
+                    return ((_a = comment.body) === null || _a === void 0 ? void 0 : _a.startsWith(prefix)) &&
+                        ((_b = comment.user) === null || _b === void 0 ? void 0 : _b.login) === "github-actions[bot]";
+                });
+                if (existingComment) {
+                    const response = yield client.rest.issues.updateComment({
+                        owner,
+                        repo,
+                        comment_id: existingComment.id,
+                        body,
+                    });
+                    core.debug(`updated comment URL: ${response.data.html_url}`);
+                }
+                else {
+                    const response = yield client.rest.issues.createComment({
+                        owner,
+                        repo,
+                        issue_number: pr,
+                        body,
+                    });
+                    core.debug(`created comment URL: ${response.data.html_url}`);
+                }
             }
         }
         catch (err) {

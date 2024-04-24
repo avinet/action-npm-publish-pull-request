@@ -1,5 +1,6 @@
 import * as sh from "@actions/exec";
 import * as github from "@actions/github";
+import { GitHub } from "@actions/github/lib/utils";
 import * as core from "@actions/core";
 import * as fs from "fs";
 import * as path from "path";
@@ -79,15 +80,41 @@ async function run() {
       const packageJsonObj = JSON.parse(packageJson);
       const packageName = packageJsonObj.name;
 
-      const response = await client.rest.issues.createComment({
+      const prefix = `npm package ${packageName} available as:`;
+      const body = `${prefix}\n\n- ${packageName}@${version.substring(
+        1
+      )}\n- ${packageName}@pr${pr}`;
+
+      const comments = await client.rest.issues.listComments({
         owner,
         repo,
         issue_number: pr,
-        body: `npm package published\n\n- ${packageName}@${version.substring(
-          1
-        )}\n- ${packageName}@pr${pr}`,
       });
-      core.debug(`created comment URL: ${response.data.html_url}`);
+
+      let existingComment = comments.data.find(
+        (comment) =>
+          comment.body?.startsWith(prefix) &&
+          comment.user?.login === "github-actions[bot]"
+      );
+
+      if (existingComment) {
+        const response = await client.rest.issues.updateComment({
+          owner,
+          repo,
+          comment_id: existingComment.id,
+          body,
+        });
+
+        core.debug(`updated comment URL: ${response.data.html_url}`);
+      } else {
+        const response = await client.rest.issues.createComment({
+          owner,
+          repo,
+          issue_number: pr,
+          body,
+        });
+        core.debug(`created comment URL: ${response.data.html_url}`);
+      }
     }
   } catch (err: any) {
     core.setFailed(err.message);
