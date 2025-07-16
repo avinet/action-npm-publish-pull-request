@@ -82,9 +82,7 @@ async function run() {
       const packageName = packageJsonObj.name;
 
       const prefix = `npm package ${packageName} available as:`;
-      const body = `${prefix}\n\n- ${packageName}@${version.substring(
-        1
-      )}\n- ${packageName}@pr${pr}`;
+      const body = `${prefix}\n\n- ${packageName}@${version}\n- ${packageName}@pr${pr}`;
 
       const comments = await client.rest.issues.listComments({
         owner,
