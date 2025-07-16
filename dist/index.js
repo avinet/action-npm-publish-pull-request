@@ -10843,15 +10843,16 @@ function run() {
             }
             const cwd = core.getInput("path") || ".";
             // Update the version number in package.json with beta.<sha>
-            let version = "";
             yield sh.exec("npm", ["version", "prerelease", `--preid=beta.${sha}`, "--no-git-tag-version"], {
-                listeners: {
-                    stdline: (data) => {
-                        version = data.trim();
-                    },
-                },
                 cwd: cwd,
             });
+            // Get the new version from package.json
+            const packageJsonPath = path.join(cwd, "package.json");
+            if (!fs.existsSync(packageJsonPath)) {
+                throw new Error(`package.json not found at ${packageJsonPath}`);
+            }
+            const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+            const version = packageJson.version;
             core.info(`Publishing package from PR #${pr} with version ${version}, access: ${access} from path ${cwd}`);
             // Publish under the PR tag
             yield sh.exec("npm", ["publish", "--access", access, "--tag", `pr${pr}`], {

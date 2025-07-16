@@ -6,7 +6,7 @@ Usage:
 
 ```yaml
 - name: Publish pre-release package (PRs only)
-  uses: avinet/action-npm-publish-pull-request@v4
+  uses: avinet/action-npm-publish-pull-request@v6
   with:
     access: restricted # Or 'public', defaults to 'restricted
     path: . # Path to run npm publish in. Defaults to . (root directory)
